@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#f5f5ef" />
+  <title>Fieldnotes — Visual Learning Library</title>
+  <style>
+    :root {
+      --paper: #f6f6f0;
+      --white: #fffefa;
+      --ink: #1e302b;
+      --muted: #73807a;
+      --line: #e6e9df;
+      --green: #285c4d;
+      --green-dark: #1d493d;
+      --lime: #c9db83;
+      --gold: #e8b968;
+      --coral: #de8972;
+      --blue: #92b9c2;
+      --lavender: #b4a5c8;
+      --shadow: 0 18px 50px rgba(36, 58, 47, .09);
+      --sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --serif: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--sans); font-size: 14px; }
+    button, input { font: inherit; }
+    button { color: inherit; }
+    .app { min-height: 100vh; }
+    .sidebar { position: fixed; z-index: 5; inset: 0 auto 0 0; width: 244px; padding: 25px 17px 20px; background: #fbfbf7; border-right: 1px solid var(--line); display: flex; flex-direction: column; }
+    .brand { display: flex; align-items: center; gap: 10px; padding: 0 9px 35px; }
+    .brand-mark { width: 33px; height: 33px; border-radius: 11px; display: grid; place-items: center; background: var(--green); color: white; }
+    .brand-mark svg { width: 20px; height: 20px; }
+    .brand-name { font-family: var(--serif); font-size: 22px; letter-spacing: -.5px; }
+    .brand-name span { color: #7b9382; }
+    .nav-label { padding: 0 11px; margin: 2px 0 10px; color: #9aa49b; font-weight: 700; font-size: 10px; letter-spacing: 1.25px; text-transform: uppercase; }
+    .nav-list { display: grid; gap: 4px; }
+    .nav-button { border: 0; background: transparent; width: 100%; display: flex; align-items: center; gap: 12px; padding: 10px 11px; border-radius: 9px; color: #68766e; cursor: pointer; text-align: left; transition: .18s ease; }
+    .nav-button:hover { background: #f0f3eb; color: var(--ink); }
+    .nav-button.active { background: #eaf0e9; color: var(--green-dark); font-weight: 650; }
+    .nav-icon { width: 18px; height: 18px; display: grid; place-items: center; flex: none; }
+    .nav-icon svg { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+    .nav-count { margin-left: auto; font-size: 11px; color: #93a097; }
+    .side-rule { height: 1px; margin: 23px 6px 20px; background: var(--line); }
+    .subject-nav .nav-button { padding-top: 8px; padding-bottom: 8px; font-size: 13px; }
+    .subject-dot { width: 9px; height: 9px; border-radius: 50%; margin: 0 4px; background: var(--dot, var(--green)); flex: none; }
+    .side-bottom { margin-top: auto; }
+    .tip { padding: 15px; border-radius: 12px; background: #eff3e9; }
+    .tip-icon { font-size: 18px; margin-bottom: 9px; }
+    .tip strong { display: block; font-size: 12px; margin-bottom: 5px; }
+    .tip p { color: #78857a; font-size: 11px; line-height: 1.55; margin: 0; }
+    .account { display: flex; align-items: center; gap: 10px; padding: 17px 8px 0; }
+    .avatar { width: 32px; height: 32px; display: grid; place-items: center; color: #416654; background: #d9e5d9; border-radius: 50%; font-family: var(--serif); font-weight: bold; }
+    .account-name { font-weight: 650; font-size: 12px; }
+    .account-note { color: #8c978f; font-size: 10px; margin-top: 3px; }
+    main { margin-left: 244px; min-height: 100vh; }
+    .topbar { min-height: 76px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 20px; padding: 0 clamp(24px, 4vw, 58px); background: rgba(250,250,246,.88); }
+    .crumb { color: #859187; font-size: 12px; display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+    .crumb b { color: #33483d; font-weight: 600; }
+    .search-wrap { position: relative; width: min(440px, 43vw); margin-left: auto; }
+    .search-wrap svg { position: absolute; left: 13px; top: 12px; width: 16px; height: 16px; stroke: #94a097; fill: none; stroke-width: 1.8; }
+    .search { width: 100%; padding: 10px 42px 10px 38px; border: 1px solid #e5e9df; outline: 0; border-radius: 8px; background: #fffefa; font-size: 12px; color: var(--ink); transition: .2s; }
+    .search:focus { border-color: #9ab39f; box-shadow: 0 0 0 3px rgba(40,92,77,.08); }
+    .search::placeholder { color: #a2aaa3; }
+    .shortcut { position: absolute; right: 10px; top: 9px; color: #9aa49c; border: 1px solid #e8ebe4; border-radius: 4px; font-size: 10px; padding: 2px 5px; }
+    .top-action { border: 0; border-radius: 8px; padding: 10px 12px; background: transparent; color: #718077; font-size: 12px; cursor: pointer; white-space: nowrap; }
+    .top-action:hover { background: #edf1e9; color: var(--green-dark); }
+    .content { max-width: 1440px; margin: 0 auto; padding: 32px clamp(24px, 4vw, 58px) 58px; }
+    .welcome-row { display: flex; justify-content: space-between; align-items: end; gap: 20px; margin-bottom: 22px; }
+    .eyebrow { color: #829386; font-weight: 700; font-size: 10px; letter-spacing: 1.55px; text-transform: uppercase; }
+    h1 { margin: 8px 0 0; font-family: var(--serif); font-weight: 500; line-height: 1.12; font-size: clamp(31px, 3.2vw, 43px); letter-spacing: -1.2px; }
+    h1 em { color: var(--green); font-weight: 500; }
+    .welcome-copy { color: #7a877e; line-height: 1.65; font-size: 12px; max-width: 390px; margin: 9px 0 0; }
+    .today { color: #829087; font-size: 11px; white-space: nowrap; padding-bottom: 5px; }
+    .hero { min-height: 238px; display: grid; grid-template-columns: minmax(0, 1.13fr) minmax(280px, .87fr); border-radius: 13px; overflow: hidden; color: #f9fcf5; background: #285c4d; box-shadow: 0 10px 30px rgba(27,74,58,.09); }
+    .hero-copy { padding: 28px 34px; position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; }
+    .hero-copy:before { content: ""; width: 210px; height: 210px; border: 1px solid rgba(255,255,255,.11); border-radius: 50%; position: absolute; right: -110px; top: -135px; box-shadow: 0 0 0 24px rgba(255,255,255,.025), 0 0 0 52px rgba(255,255,255,.02); }
+    .hero-kicker { text-transform: uppercase; font-size: 9px; color: #c8d8bc; letter-spacing: 1.5px; font-weight: 700; }
+    .hero h2 { position: relative; margin: 13px 0 8px; font-family: var(--serif); font-weight: 400; font-size: 29px; letter-spacing: -.45px; }
+    .hero p { position: relative; color: #d2e0d2; font-size: 11px; line-height: 1.7; margin: 0; max-width: 380px; }
+    .hero-bottom { display: flex; align-items: center; gap: 18px; margin-top: 20px; }
+    .primary-light { border: 0; border-radius: 7px; padding: 10px 14px; font-size: 11px; color: #234b3e; background: #e5edcf; font-weight: 700; cursor: pointer; }
+    .primary-light:hover { background: #eff5dc; }
+    .hero-link { color: #e3eadb; font-size: 11px; cursor: pointer; border: 0; background: none; padding: 5px; }
+    .hero-art { min-height: 238px; position: relative; display: grid; place-items: center; background: radial-gradient(ellipse at center, #477760 0%, #285c4d 72%); }
+    .hero-art:after { content: ""; position: absolute; inset: 20px 30px; border: 1px solid rgba(236,244,221,.13); border-radius: 7px; transform: rotate(-2deg); }
+    .hero-svg { width: 90%; max-width: 435px; position: relative; z-index: 1; filter: drop-shadow(0 9px 14px rgba(7,30,22,.14)); }
+    .hero-label { position: absolute; z-index: 2; right: 32px; bottom: 23px; font-size: 9px; color: #d1dfce; letter-spacing: .3px; }
+    .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); margin: 22px 0 35px; padding: 0 8px; }
+    .stat { border-right: 1px solid var(--line); padding: 1px 20px; display: flex; align-items: center; gap: 12px; }
+    .stat:first-child { padding-left: 0; }
+    .stat:last-child { border: 0; }
+    .stat-icon { width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center; background: #e9efe5; color: var(--green); font-size: 14px; }
+    .stat-number { font-family: var(--serif); font-size: 19px; line-height: 1; }
+    .stat-caption { color: #849087; font-size: 10px; margin-top: 5px; }
+    .section-heading { display: flex; align-items: end; justify-content: space-between; margin-bottom: 14px; gap: 20px; }
+    h2.section-title { font-family: var(--serif); font-weight: 500; letter-spacing: -.4px; font-size: 23px; margin: 0; }
+    .section-sub { color: #849087; font-size: 11px; margin-top: 5px; }
+    .text-button { border: 0; background: none; color: #47745c; font-size: 11px; cursor: pointer; padding: 7px 0; }
+    .text-button:hover { color: #1d493d; }
+    .subject-cards { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; margin-bottom: 35px; }
+    .subject-card { overflow: hidden; min-width: 0; background: var(--white); border: 1px solid #e8ebe3; border-radius: 10px; cursor: pointer; text-align: left; transition: transform .18s, box-shadow .18s; padding: 0; }
+    .subject-card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+    .subject-art { height: 83px; position: relative; overflow: hidden; background: var(--tint); display: grid; place-items: center; }
+    .subject-art:before, .subject-art:after { content: ""; position: absolute; border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent); border-radius: 50%; width: 94px; height: 94px; right: -15px; top: 25px; }
+    .subject-art:after { width: 66px; height: 66px; right: 0; top: 39px; }
+    .subject-art svg { width: 64px; height: 52px; position: relative; z-index: 1; }
+    .subject-info { display: flex; align-items: center; justify-content: space-between; padding: 11px 12px; }
+    .subject-info strong { font-size: 11px; font-weight: 650; }
+    .subject-info span { color: #96a097; font-size: 10px; }
+    .library-section { scroll-margin-top: 20px; }
+    .filter-bar { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; margin-bottom: 16px; }
+    .filter-label { color: #8b978e; font-size: 10px; margin-right: 5px; }
+    .filter-chip { border: 1px solid #e4e8df; background: #fbfbf7; color: #718077; font-size: 10px; border-radius: 100px; padding: 7px 11px; cursor: pointer; transition: .15s; }
+    .filter-chip:hover { border-color: #b7c9b5; color: var(--green); }
+    .filter-chip.selected { background: var(--green); border-color: var(--green); color: white; }
+    .sort-select { margin-left: auto; border: 0; background: transparent; color: #738078; font-size: 10px; padding: 6px; outline: none; cursor: pointer; }
+    .result-line { display: flex; justify-content: space-between; align-items: center; color: #8b978e; font-size: 10px; margin: 0 1px 11px; }
+    .resource-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+    .resource-card { background: var(--white); border: 1px solid #e8ebe3; border-radius: 10px; overflow: hidden; min-width: 0; cursor: pointer; position: relative; transition: transform .18s, box-shadow .18s, border-color .18s; }
+    .resource-card:hover { transform: translateY(-3px); box-shadow: 0 12px 30px rgba(36,58,47,.09); border-color: #dbe3d7; }
+    .resource-cover { height: 148px; background: var(--cover); position: relative; overflow: hidden; }
+    .resource-cover svg { width: 100%; height: 100%; display: block; }
+    .type-pill { position: absolute; left: 10px; top: 10px; border-radius: 4px; padding: 5px 7px; font-size: 8px; letter-spacing: .55px; text-transform: uppercase; font-weight: 750; background: rgba(255,255,250,.88); color: #52685b; backdrop-filter: blur(4px); }
+    .save-button { width: 27px; height: 27px; border: 0; border-radius: 50%; position: absolute; right: 9px; top: 9px; background: rgba(255,255,250,.89); display: grid; place-items: center; color: #718078; cursor: pointer; }
+    .save-button:hover, .save-button.saved { color: #c27658; }
+    .save-button svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.7; }
+    .save-button.saved svg { fill: currentColor; }
+    .resource-body { padding: 12px 12px 11px; }
+    .resource-meta { display: flex; align-items: center; gap: 6px; color: #8a968e; font-size: 9px; margin-bottom: 7px; }
+    .meta-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--subject-color); }
+    .resource-body h3 { margin: 0; font-size: 12px; line-height: 1.35; font-weight: 660; letter-spacing: -.12px; min-height: 32px; }
+    .resource-desc { color: #859188; font-size: 10px; line-height: 1.45; margin: 6px 0 11px; min-height: 28px; }
+    .card-foot { padding-top: 9px; border-top: 1px solid #eff0ea; display: flex; align-items: center; justify-content: space-between; color: #929c95; font-size: 9px; }
+    .card-foot b { font-weight: 600; color: #688173; }
+    .arrow { font-size: 14px; line-height: .5; color: #92a399; }
+    .empty-state { display: none; text-align: center; padding: 55px 20px; border: 1px dashed #d9e0d6; border-radius: 12px; background: rgba(255,255,250,.6); }
+    .empty-state.show { display: block; }
+    .empty-state .empty-icon { font-size: 28px; margin-bottom: 8px; }
+    .empty-state strong { font-family: var(--serif); font-size: 20px; font-weight: 500; }
+    .empty-state p { margin: 7px 0 12px; color: #8a968e; font-size: 11px; }
+    .footer-note { color: #9aa39b; font-size: 9px; line-height: 1.6; border-top: 1px solid var(--line); margin-top: 37px; padding-top: 14px; }
+    /* Resource reader */
+    .reader-backdrop { position: fixed; inset: 0; z-index: 20; display: none; align-items: center; justify-content: center; background: rgba(22,39,32,.62); padding: 28px; backdrop-filter: blur(5px); }
+    .reader-backdrop.open { display: flex; }
+    .reader { width: min(950px, 96vw); max-height: min(90vh, 880px); background: #fafaf5; border-radius: 14px; overflow: hidden; display: grid; grid-template-columns: 1.03fr .97fr; box-shadow: 0 24px 80px rgba(0,0,0,.24); position: relative; }
+    .reader-visual { background: var(--reader-bg, #e9eee4); min-height: 420px; display: grid; place-items: center; position: relative; padding: 25px; }
+    .reader-visual svg { width: 100%; height: 100%; max-height: 540px; filter: drop-shadow(0 12px 18px rgba(33,58,45,.1)); }
+    .reader-visual-note { position: absolute; bottom: 17px; left: 22px; font-size: 9px; color: #77867b; letter-spacing: .3px; }
+    .reader-content { padding: 34px 35px 26px; overflow-y: auto; display: flex; flex-direction: column; }
+    .reader-close { position: absolute; top: 13px; right: 13px; z-index: 2; width: 32px; height: 32px; border: 1px solid #e7e9e1; border-radius: 50%; background: rgba(255,255,250,.92); color: #67766d; font-size: 18px; cursor: pointer; }
+    .reader-kicker { color: #728a78; font-size: 9px; letter-spacing: 1.3px; text-transform: uppercase; font-weight: 750; }
+    .reader-content h2 { font-family: var(--serif); font-size: 31px; font-weight: 500; line-height: 1.13; margin: 11px 0 8px; letter-spacing: -.6px; }
+    .reader-submeta { font-size: 10px; color: #87938a; padding-bottom: 18px; border-bottom: 1px solid #e9ece4; }
+    .reader-description { font-size: 12px; line-height: 1.7; color: #68776e; margin: 18px 0; }
+    .reader-section-label { color: #819086; text-transform: uppercase; font-size: 9px; letter-spacing: 1.1px; font-weight: 750; margin: 2px 0 10px; }
+    .reader-points { display: grid; gap: 9px; margin: 0 0 17px; }
+    .reader-point { display: grid; grid-template-columns: 21px 1fr; gap: 8px; align-items: start; color: #55665b; font-size: 11px; line-height: 1.55; }
+    .point-n { width: 19px; height: 19px; display: grid; place-items: center; border-radius: 6px; color: #52705c; background: #e8efe4; font-size: 9px; font-weight: 700; }
+    .exam-box { padding: 14px; background: #f0f3e9; border-radius: 9px; margin-bottom: 14px; }
+    .exam-question { color: #41554a; font-family: var(--serif); font-size: 15px; line-height: 1.5; margin: 5px 0 10px; }
+    .answer-toggle { border: 0; padding: 0; color: #38715b; background: none; font-size: 10px; font-weight: 700; cursor: pointer; }
+    .answer { display: none; color: #738178; font-size: 10px; line-height: 1.55; border-top: 1px solid #dde6d8; margin-top: 10px; padding-top: 9px; }
+    .answer.visible { display: block; }
+    .demo-note { color: #9a7852; background: #f8f1e5; border-radius: 6px; padding: 8px 9px; font-size: 9px; line-height: 1.5; margin: 0 0 12px; }
+    .reader-actions { margin-top: auto; display: flex; gap: 8px; padding-top: 15px; }
+    .reader-action { flex: 1; border: 1px solid #dce5da; background: white; border-radius: 7px; padding: 10px; font-size: 10px; color: #426851; cursor: pointer; font-weight: 650; }
+    .reader-action.primary { background: var(--green); border-color: var(--green); color: white; }
+    .reader-action:hover { filter: brightness(.97); }
+    .projection .reader { width: min(1200px, 96vw); max-height: 94vh; grid-template-columns: 1fr; grid-template-rows: 1fr auto; background: #15251f; }
+    .projection .reader-visual { min-height: 0; height: min(72vh, 730px); background: #182c24; padding: 32px 9%; }
+    .projection .reader-visual svg { max-height: 100%; width: min(100%, 1060px); }
+    .projection .reader-visual-note { color: #b6c6b8; }
+    .projection .reader-content { padding: 16px 25px; flex-direction: row; align-items: center; gap: 17px; overflow: visible; background: #f9faf5; }
+    .projection .reader-kicker { display: none; }
+    .projection .reader-content h2 { font-size: 19px; margin: 0; min-width: 200px; }
+    .projection .reader-submeta { border: 0; padding: 0; margin-right: auto; }
+    .projection .reader-description, .projection .reader-section-label, .projection .reader-points, .projection .exam-box, .projection .demo-note { display: none !important; }
+    .projection .reader-actions { padding: 0; margin: 0; flex: 0 0 auto; }
+    .projection .reader-action { padding: 9px 12px; min-width: 108px; }
+    .projection .reader-close { top: 12px; right: 12px; }
+    .toast { position: fixed; bottom: 24px; left: 50%; transform: translate(-50%, 20px); opacity: 0; z-index: 40; padding: 10px 15px; border-radius: 7px; background: #263e33; color: white; font-size: 11px; box-shadow: var(--shadow); transition: .2s; pointer-events: none; }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+    .mobile-menu { display: none; border: 0; background: none; font-size: 20px; color: #52705e; cursor: pointer; }
+    @media (max-width: 1120px) {
+      .resource-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .subject-cards { grid-template-columns: repeat(5, minmax(112px,1fr)); overflow-x: auto; padding-bottom: 4px; }
+      .subject-info { align-items: flex-start; flex-direction: column; gap: 4px; }
+    }
+    @media (max-width: 790px) {
+      .sidebar { transform: translateX(-100%); transition: transform .22s ease; box-shadow: var(--shadow); }
+      .sidebar.mobile-open { transform: translateX(0); }
+      main { margin-left: 0; }
+      .mobile-menu { display: inline-grid; place-items: center; }
+      .topbar { padding: 0 18px; gap: 10px; }
+      .crumb { display: none; }
+      .search-wrap { width: auto; flex: 1; }
+      .top-action { font-size: 0; padding: 9px; }
+      .top-action:after { content: "⛶"; font-size: 16px; }
+      .content { padding: 27px 18px 45px; }
+      .welcome-row { align-items: flex-start; }
+      .today { display: none; }
+      .hero { grid-template-columns: 1fr; }
+      .hero-copy { min-height: 215px; padding: 25px; }
+      .hero-art { min-height: 175px; }
+      .hero-svg { max-height: 158px; }
+      .stats-row { margin-bottom: 29px; padding: 0; }
+      .stat { padding: 0 9px; gap: 8px; }
+      .stat-icon { width: 27px; height: 27px; }
+      .stat-number { font-size: 16px; }
+      .stat-caption { font-size: 9px; }
+      .resource-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
+      .resource-cover { height: 127px; }
+      .reader-backdrop { padding: 10px; }
+      .reader { width: min(620px, 100%); max-height: 95vh; grid-template-columns: 1fr; grid-template-rows: 215px 1fr; overflow-y: auto; }
+      .reader-visual { min-height: 0; padding: 15px; }
+      .reader-visual svg { max-height: 205px; }
+      .reader-content { padding: 23px 22px 18px; }
+      .reader-content h2 { font-size: 26px; }
+      .projection .reader { grid-template-rows: 1fr auto; }
+      .projection .reader-visual { height: 66vh; }
+      .projection .reader-content { flex-wrap: wrap; gap: 8px; padding: 12px; }
+      .projection .reader-content h2 { font-size: 15px; min-width: 140px; }
+      .projection .reader-submeta { display: none; }
+      .projection .reader-action { min-width: 85px; font-size: 9px; }
+    }
+    @media (max-width: 430px) {
+      .subject-cards { grid-template-columns: repeat(5, 112px); }
+      .resource-grid { grid-template-columns: 1fr; }
+      .resource-cover { height: 180px; }
+      .resource-desc { min-height: auto; }
+      .stats-row { gap: 0; }
+      .stat { align-items: flex-start; flex-direction: column; }
+      .stat-icon { margin-bottom: 3px; }
+      .welcome-copy { max-width: 310px; }
+      .section-heading { align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 19.5c2.7-1.5 5.3-1.5 8 0 2.7-1.5 5.3-1.5 8 0V6.8c-2.7-1.5-5.3-1.5-8 0-2.7-1.5-5.3-1.5-8 0z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 7v12.5M7 9l2.5 1M17 9l-2.5 1M7 13l2.5 1M17 13l-2.5 1" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></div>
+        <div class="brand-name">fieldnotes<span>.</span></div>
+      </div>
+      <div class="nav-label">Workspace</div>
+      <nav class="nav-list" aria-label="Main navigation">
+        <button class="nav-button active" data-view="all"><span class="nav-icon"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg></span>All resources <span class="nav-count">24</span></button>
+        <button class="nav-button" data-view="questions"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M7 3.8h7l4 4V20H7a2 2 0 0 1-2-2V5.8a2 2 0 0 1 2-2z"/><path d="M14 4v4h4M9 12h6M9 16h6"/></svg></span>Past questions <span class="nav-count">4</span></button>
+        <button class="nav-button" data-view="saved"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M6 4.8A1.8 1.8 0 0 1 7.8 3h8.4A1.8 1.8 0 0 1 18 4.8V21l-6-3.7L6 21z"/></svg></span>Saved resources <span class="nav-count" id="savedCount">0</span></button>
+      </nav>
+      <div class="side-rule"></div>
+      <div class="nav-label">Browse subjects</div>
+      <nav class="nav-list subject-nav" aria-label="Browse by subject">
+        <button class="nav-button subject-link" data-subject="Mathematics"><span class="subject-dot" style="--dot:#dd9566"></span>Mathematics</button>
+        <button class="nav-button subject-link" data-subject="Biology"><span class="subject-dot" style="--dot:#79a47f"></span>Biology</button>
+        <button class="nav-button subject-link" data-subject="Geography"><span class="subject-dot" style="--dot:#76aeb5"></span>Geography</button>
+        <button class="nav-button subject-link" data-subject="History"><span class="subject-dot" style="--dot:#bd8e66"></span>History</button>
+        <button class="nav-button subject-link" data-subject="Civic Education"><span class="subject-dot" style="--dot:#9d91b6"></span>Civic Education</button>
+      </nav>
+      <div class="side-bottom">
+        <div class="tip"><div class="tip-icon">✦</div><strong>Learn it. Picture it.</strong><p>Visuals help turn difficult ideas into things you can remember.</p></div>
+        <div class="account"><div class="avatar">S</div><div><div class="account-name">Student workspace</div><div class="account-note">Personal library</div></div></div>
+      </div>
+    </aside>
+    <main>
+      <header class="topbar">
+        <button class="mobile-menu" id="mobileMenu" aria-label="Open menu">☰</button>
+        <div class="crumb">Library <span>›</span> <b id="crumbCurrent">All resources</b></div>
+        <div class="search-wrap">
+          <svg viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.3"/><path d="m15.5 15.5 4 4"/></svg>
+          <input id="searchInput" class="search" type="search" placeholder="Search topics, subjects, or keywords…" aria-label="Search resources" />
+          <span class="shortcut">/</span>
+        </div>
+        <button class="top-action" id="topProject">Open projector</button>
+      </header>
+      <div class="content">
+        <section class="welcome-row">
+          <div><div class="eyebrow">Your visual revision companion</div><h1>See the idea.<br /><em>Remember it.</em></h1><p class="welcome-copy">A thoughtful collection of diagrams, maps and study notes to make tricky topics click.</p></div>
+          <div class="today" id="todayDate"></div>
+        </section>
+        <section class="hero" aria-label="Featured resource">
+          <div class="hero-copy">
+            <div class="hero-kicker">This week’s visual · Biology</div>
+            <h2>Follow the flow of life.</h2>
+            <p>Trace how blood moves through the heart in one clear, colour-coded view. A quick visual for your next revision session.</p>
+            <div class="hero-bottom"><button class="primary-light" id="featuredOpen">Explore featured visual&nbsp; →</button><button class="hero-link" id="heroBrowse">Browse all topics</button></div>
+          </div>
+          <div class="hero-art" id="heroArt"><div class="hero-label">BIOLOGY · CIRCULATORY SYSTEM</div></div>
+        </section>
+        <section class="stats-row" aria-label="Library at a glance">
+          <div class="stat"><div class="stat-icon">▧</div><div><div class="stat-number">20</div><div class="stat-caption">visual resources</div></div></div>
+          <div class="stat"><div class="stat-icon">◉</div><div><div class="stat-number">05</div><div class="stat-caption">WAEC subjects</div></div></div>
+          <div class="stat"><div class="stat-icon">⌑</div><div><div class="stat-number">04</div><div class="stat-caption">question sets</div></div></div>
+        </section>
+        <section aria-labelledby="subjectsHeading">
+          <div class="section-heading"><div><h2 class="section-title" id="subjectsHeading">Explore a subject</h2><div class="section-sub">Find a fresh way into the topic you’re revising</div></div><button class="text-button" id="allSubjects">View all resources&nbsp; →</button></div>
+          <div class="subject-cards" id="subjectCards"></div>
+        </section>
+        <section class="library-section" id="librarySection" aria-labelledby="libraryHeading">
+          <div class="section-heading"><div><h2 class="section-title" id="libraryHeading">Library picks</h2><div class="section-sub" id="librarySubtitle">Hand-picked visuals to make revision feel lighter</div></div><button class="text-button" id="clearFilters">Clear filters&nbsp; ↗</button></div>
+          <div class="filter-bar" id="filterBar"></div>
+          <div class="result-line"><span id="resultCount">Showing 24 resources</span><select class="sort-select" id="sortSelect" aria-label="Sort resources"><option value="recommended">Sort: Recommended</option><option value="az">Title: A–Z</option><option value="subject">Subject</option></select></div>
+          <div class="resource-grid" id="resourceGrid"></div>
+          <div class="empty-state" id="emptyState"><div class="empty-icon">⌕</div><strong>No resources found</strong><p>Try another search term or choose a different subject.</p><button class="text-button" id="emptyReset">Reset your filters&nbsp; →</button></div>
+        </section>
+        <div class="footer-note">Fieldnotes is a learning-library PoC. Question packs contain illustrative practice extracts for this demo; verify official WAEC papers with an authorized source. Resources are provided for revision and classroom projection.</div>
+      </div>
+    </main>
+  </div>
+
+  <div class="reader-backdrop" id="readerBackdrop" role="dialog" aria-modal="true" aria-labelledby="readerTitle">
+    <article class="reader" id="reader">
+      <button class="reader-close" id="readerClose" aria-label="Close reader">×</button>
+      <div class="reader-visual" id="readerVisual"></div>
+      <div class="reader-content" id="readerContent"></div>
+    </article>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const subjects = [
+      {name:'Mathematics',count:4,color:'#df9567',tint:'#f6e9df',icon:'math'},
+      {name:'Biology',count:4,color:'#78a27c',tint:'#e8f0e5',icon:'bio'},
+      {name:'Geography',count:4,color:'#72a9b1',tint:'#e4f0ef',icon:'geo'},
+      {name:'History',count:4,color:'#b78b68',tint:'#f1e8df',icon:'history'},
+      {name:'Civic Education',count:4,color:'#9b8caf',tint:'#ece9f1',icon:'civic'}
+    ];
+    const resources = [
+      {id:'circle-angles',title:'Angles in a circle',subject:'Mathematics',type:'Diagram',category:'Visual',time:'4 min',description:'See how arcs and angles connect around the circumference.',kind:'geometry',tags:['circle','theorem','geometry','chord'],takeaways:['An angle at the centre is twice the angle at the circumference standing on the same arc.','Angles in the same segment of a circle are equal.','The angle in a semicircle is 90°.'],updated:'Featured'},
+      {id:'coordinates',title:'Coordinate geometry',subject:'Mathematics',type:'Illustration',category:'Visual',time:'5 min',description:'A visual guide to gradient, midpoint and distance.',kind:'coordinates',tags:['gradient','midpoint','distance','graph'],takeaways:['Gradient is the change in y divided by the change in x.','The midpoint lies halfway between two endpoints.','Use the coordinate grid to check whether a line rises or falls.']},
+      {id:'trig',title:'Trigonometry at a glance',subject:'Mathematics',type:'Revision sheet',category:'Slides',time:'6 min',description:'Match sine, cosine and tangent to the sides of a right triangle.',kind:'triangle',tags:['sine','cosine','tangent','soh cah toa'],takeaways:['SOH: sine equals opposite over hypotenuse.','CAH: cosine equals adjacent over hypotenuse.','TOA: tangent equals opposite over adjacent.']},
+      {id:'mensuration',title:'Mensuration formula map',subject:'Mathematics',type:'Infographic',category:'Visual',time:'5 min',description:'Compare the area and volume of familiar shapes.',kind:'shapes',tags:['area','volume','cylinder','prism'],takeaways:['Area measures a flat surface in square units.','Volume measures three-dimensional space in cubic units.','Keep the units consistent before substituting into a formula.']},
+
+      {id:'plant-cell',title:'Inside a plant cell',subject:'Biology',type:'Science diagram',category:'Visual',time:'4 min',description:'Identify key organelles and the jobs they do.',kind:'cell',tags:['cell','chloroplast','nucleus','organelle'],takeaways:['The cell wall gives a plant cell structure and support.','Chloroplasts contain chlorophyll for photosynthesis.','The nucleus stores genetic material and helps control cell activity.']},
+      {id:'heart-flow',title:'How blood moves through the heart',subject:'Biology',type:'Science diagram',category:'Visual',time:'6 min',description:'Follow oxygen-poor and oxygen-rich blood through the chambers.',kind:'heart',tags:['heart','circulation','artery','vein'],takeaways:['The right side sends oxygen-poor blood to the lungs.','Oxygen-rich blood returns to the left side of the heart.','The left ventricle pumps blood around the body.'],updated:'Featured'},
+      {id:'food-chain',title:'Food chains & energy',subject:'Biology',type:'Illustration',category:'Visual',time:'3 min',description:'Trace energy from the sun through a simple ecosystem.',kind:'foodchain',tags:['ecosystem','producer','consumer','energy'],takeaways:['Producers capture energy, usually from sunlight.','Energy moves between organisms when one is eaten by another.','Decomposers return nutrients to the environment.']},
+      {id:'photosynthesis',title:'Photosynthesis, simply',subject:'Biology',type:'Revision sheet',category:'Slides',time:'5 min',description:'Inputs, outputs and conditions for making glucose.',kind:'photo',tags:['photosynthesis','glucose','carbon dioxide','chlorophyll'],takeaways:['Plants use light energy to make glucose from carbon dioxide and water.','Oxygen is released as a by-product.','Chlorophyll in the chloroplast captures light energy.']},
+
+      {id:'climate-zones',title:'West Africa’s climate zones',subject:'Geography',type:'Map',category:'Visual',time:'5 min',description:'Locate the humid coast, savanna and Sahel transition.',kind:'map',tags:['west africa','climate','sahel','savanna'],takeaways:['Rainfall generally decreases northward from the Gulf of Guinea.','The wet season is longer in the south than in the Sahel.','Vegetation patterns reflect rainfall and length of dry season.']},
+      {id:'contours',title:'Reading contour lines',subject:'Geography',type:'Map study',category:'Visual',time:'4 min',description:'Recognize slopes, valleys and hilltops on a map.',kind:'contour',tags:['topography','contour','relief','map reading'],takeaways:['Close contour lines indicate a steep slope.','Widely spaced contours indicate a gentle slope.','A closed loop of contours usually marks a hill or depression.']},
+      {id:'global-winds',title:'Global wind belts',subject:'Geography',type:'Science diagram',category:'Visual',time:'4 min',description:'A simple view of circulation cells and prevailing winds.',kind:'winds',tags:['atmosphere','trade winds','winds','circulation'],takeaways:['Unequal heating helps drive large-scale air movement.','Trade winds blow toward the equatorial low-pressure belt.','Westerlies dominate much of the mid-latitudes.']},
+      {id:'river-course',title:'A river’s journey',subject:'Geography',type:'Illustration',category:'Visual',time:'5 min',description:'Compare river features from source to mouth.',kind:'river',tags:['river','erosion','meander','delta'],takeaways:['The upper course has steep gradients and strong vertical erosion.','Meanders become wider downstream as lateral erosion increases.','Deposited sediment can form a floodplain or delta.']},
+
+      {id:'empires',title:'West African empires',subject:'History',type:'Timeline',category:'Visual',time:'5 min',description:'Place Ghana, Mali and Songhai in historical sequence.',kind:'timeline',tags:['ghana empire','mali','songhai','west africa'],takeaways:['Ghana, Mali and Songhai flourished at different points in the western Sudan.','Trade routes across the Sahara linked the region with North Africa.','Mali reached prominence under Mansa Musa in the 14th century.']},
+      {id:'independence',title:'The road to Nigerian independence',subject:'History',type:'Timeline',category:'Slides',time:'6 min',description:'Key constitutional steps toward self-government.',kind:'timeline2',tags:['nigeria','independence','constitution','1960'],takeaways:['Constitutional change expanded regional and national representation.','Nigeria became independent on 1 October 1960.','Historical timelines help distinguish causes, events and outcomes.']},
+      {id:'trade-routes',title:'Trade across the Atlantic',subject:'History',type:'Historical map',category:'Visual',time:'5 min',description:'Map the connected routes and understand their human cost.',kind:'routes',tags:['atlantic','trade','history','routes'],takeaways:['The Atlantic system linked Europe, Africa and the Americas.','Millions of enslaved Africans were forcibly transported across the ocean.','Study trade networks alongside their human and political consequences.']},
+      {id:'berlin',title:'The Berlin Conference, 1884–85',subject:'History',type:'Revision sheet',category:'Slides',time:'4 min',description:'What the conference decided — and who was excluded.',kind:'conference',tags:['berlin conference','colonialism','africa','1884'],takeaways:['European powers negotiated rules for claiming territory in Africa.','African leaders were not represented at the conference.','The conference accelerated the European partition of Africa.']},
+
+      {id:'government',title:'The three arms of government',subject:'Civic Education',type:'Infographic',category:'Visual',time:'4 min',description:'How the legislature, executive and judiciary share power.',kind:'government',tags:['government','legislature','executive','judiciary'],takeaways:['The legislature makes laws and represents citizens.','The executive implements laws and public policy.','The judiciary interprets laws and settles disputes.']},
+      {id:'rights',title:'Fundamental human rights',subject:'Civic Education',type:'Infographic',category:'Visual',time:'4 min',description:'A quick guide to rights and responsibilities in civic life.',kind:'rights',tags:['human rights','rights','constitution','responsibilities'],takeaways:['Rights protect the dignity and freedoms of individuals.','Rights are set out in a country’s constitution and laws.','Citizens also have responsibilities under the law.']},
+      {id:'election-cycle',title:'How an election works',subject:'Civic Education',type:'Process map',category:'Visual',time:'5 min',description:'Follow the main steps from registration to results.',kind:'election',tags:['election','democracy','voting','INEC'],takeaways:['Voter registration creates an eligible voters’ register.','Ballots should be cast freely and counted transparently.','Credible elections rely on lawful procedures and public trust.']},
+      {id:'citizenship',title:'Citizenship starts here',subject:'Civic Education',type:'Illustration',category:'Slides',time:'3 min',description:'Everyday ways to contribute to your community.',kind:'community',tags:['citizenship','community','duties','participation'],takeaways:['Responsible citizens respect others and the rule of law.','Community participation helps people solve shared problems.','Civic engagement includes staying informed and taking part.']},
+
+      {id:'q-math',title:'Mathematics · practice set',subject:'Mathematics',type:'Past questions',category:'Questions',time:'8 questions',description:'Short WASSCE-style questions on number, geometry and algebra.',kind:'paper',tags:['waec','past questions','practice','algebra','exam'],questions:[['Simplify 3(2x − 1) − 4x.',['2x − 3','2x + 3','10x − 3','10x + 3'],'A. 2x − 3. Expand first: 6x − 3 − 4x = 2x − 3.'],['A circle has radius 7 cm. Find its circumference in terms of π.',['7π cm','14π cm','28π cm','49π cm'],'C = 2πr = 2π × 7 = 14π cm.']],takeaways:['Show working clearly: a correct method can earn credit.','Check that the final answer includes the requested unit.']},
+      {id:'q-biology',title:'Biology · practice set',subject:'Biology',type:'Past questions',category:'Questions',time:'8 questions',description:'Cell biology, ecology and human systems in one revision pack.',kind:'paper',tags:['waec','past questions','practice','biology','exam'],questions:[['Which cell structure controls the movement of substances into and out of a cell?',['Cell wall','Cell membrane','Nucleus','Vacuole'],'B. The cell membrane controls the movement of substances into and out of the cell.'],['In a food chain, green plants are usually described as what?',['Consumers','Decomposers','Producers','Parasites'],'C. Green plants are producers because they make organic food, usually using light energy.']],takeaways:['Read every option before selecting an answer.','Use labelled sketches when a question asks you to describe a structure.']},
+      {id:'q-geography',title:'Geography · practice set',subject:'Geography',type:'Past questions',category:'Questions',time:'8 questions',description:'Map reading, weather and physical geography practice.',kind:'paper',tags:['waec','past questions','practice','geography','exam'],questions:[['A map has a scale of 1:50,000. What ground distance does 4 cm represent?',['0.5 km','2 km','20 km','200 km'],'B. 4 cm × 50,000 = 200,000 cm = 2 km.'],['Which instrument is used to measure atmospheric pressure?',['Barometer','Hygrometer','Anemometer','Rain gauge'],'A. A barometer measures atmospheric pressure.']],takeaways:['Convert map distances using the scale before interpreting them.','State the evidence from a map when supporting your answer.']},
+      {id:'q-civic',title:'Civic Education · practice set',subject:'Civic Education',type:'Past questions',category:'Questions',time:'8 questions',description:'Democracy, citizenship and public institutions review.',kind:'paper',tags:['waec','past questions','practice','civic','exam'],questions:[['Which arm of government is primarily responsible for interpreting laws?',['Executive','Legislature','Judiciary','Civil service'],'C. The judiciary interprets laws and resolves legal disputes.'],['A secret ballot primarily protects which democratic principle?',['Voter privacy','Public campaigning','Party funding','Open registration'],'A. A secret ballot protects voter privacy and freedom from intimidation.']],takeaways:['Distinguish the role of each arm of government.','Use civic terms precisely, and support explanations with examples.']}
+    ];
+
+    const palette = {Mathematics:'#dd9566',Biology:'#79a47f',Geography:'#76aeb5',History:'#bd8e66','Civic Education':'#9d91b6'};
+    const bgPalette = {geometry:'#f1e5dc',coordinates:'#e7edf1',triangle:'#f3eadb',shapes:'#edf0e4',cell:'#e7f0e5',heart:'#f2e5e0',foodchain:'#eef0df',photo:'#e8f0e5',map:'#e5efeb',contour:'#e7eeea',winds:'#e4eef2',river:'#e3eef0',timeline:'#f2eadd',timeline2:'#f1e9df',routes:'#ecf0e6',conference:'#efe9df',government:'#ece9f2',rights:'#f0eaf0',election:'#e9eff0',community:'#edf0e4',paper:'#f0ede3'};
+    const esc = (s) => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    function svgIcon(subject){
+      const icons={math:'<path d="M15 4H8l-1 5h7.5l-1 4H6m5 0-1 7m8-2-4-5m0 0 4-5"/><path d="M18 4h.01M19 19h.01"/>',bio:'<path d="M12 20c0-4 1-6 5-9 3-2 3-6 2-8-4 0-8 2-8 6v11Z"/><path d="M12 17c-1-3-3-5-7-6-2 3-1 7 3 8 2 1 4 0 5-2Z"/><path d="M12 18 17 9"/>',geo:'<path d="m4 8 5-3 6 3 5-3v12l-5 3-6-3-5 3z"/><path d="M9 5v12m6-9v12"/><circle cx="14" cy="11" r="1"/>',history:'<path d="M5 5h14M5 12h14M5 19h14"/><circle cx="8" cy="5" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="10" cy="19" r="2"/>',civic:'<path d="m12 3 9 5H3zM5 10v8m4-8v8m6-8v8m4-8v8M3 21h18M3 18h18"/>'};
+      return `<svg viewBox="0 0 24 24" fill="none" stroke="#435f4f" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">${icons[subject.icon]}</svg>`;
+    }
+    function art(item, large=false){
+      const id=item.kind, uid='a'+item.id.replace(/[^a-z0-9]/gi,'');
+      const commonStart=`<svg viewBox="0 0 420 260" preserveAspectRatio="xMidYMid meet" role="img" aria-label="${esc(item.title)}"><defs><linearGradient id="${uid}g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fffdf5" stop-opacity=".94"/><stop offset="1" stop-color="#dce8d9" stop-opacity=".7"/></linearGradient><filter id="${uid}s"><feDropShadow dx="0" dy="5" stdDeviation="6" flood-color="#315545" flood-opacity=".13"/></filter></defs><rect width="420" height="260" rx="12" fill="${bgPalette[id]||'#e9eee4'}"/><circle cx="370" cy="36" r="80" fill="#fff" opacity=".18"/><circle cx="42" cy="238" r="93" fill="#fff" opacity=".15"/>`;
+      const end=`<text x="22" y="239" fill="#718178" font-family="Arial,sans-serif" font-size="10" letter-spacing="1.2">${esc(item.subject.toUpperCase())}</text><text x="397" y="239" text-anchor="end" fill="#87958b" font-family="Arial,sans-serif" font-size="9">FIELDNOTES · STUDY VISUAL</text></svg>`;
+      const mapPath='M163 45 190 41 211 52 231 48 244 58 262 56 272 70 289 74 287 91 302 101 291 113 298 126 282 135 279 151 264 157 260 173 240 174 230 189 211 183 196 194 183 184 166 185 155 170 142 167 137 148 123 140 128 123 117 111 129 99 126 81 143 77 150 62Z';
+      let content='';
+      if(id==='geometry') content=`<g filter="url(#${uid}s)"><circle cx="216" cy="130" r="83" fill="url(#${uid}g)" stroke="#5f8a70" stroke-width="2"/><circle cx="216" cy="130" r="3.5" fill="#d77d60"/><path d="M216 130 146 84M216 130 284 78M146 84 284 78" fill="none" stroke="#d77d60" stroke-width="2.5"/><path d="M200 119a20 20 0 0 1 25-10" fill="none" stroke="#476e58" stroke-width="2"/><path d="M158 88a17 17 0 0 1 12-8" fill="none" stroke="#476e58" stroke-width="2"/><text x="204" y="153" fill="#496453" font-size="12" font-family="Arial">O</text><text x="132" y="81" fill="#a96750" font-size="13" font-family="Arial">A</text><text x="286" y="75" fill="#a96750" font-size="13" font-family="Arial">B</text><rect x="295" y="105" width="82" height="47" rx="7" fill="#fffdf7"/><text x="306" y="124" fill="#496453" font-size="10" font-family="Arial">∠AOB = 2 × ∠ACB</text><text x="306" y="140" fill="#849087" font-size="8" font-family="Arial">centre · circumference</text></g>`;
+      if(id==='coordinates') content=`<g><rect x="67" y="38" width="286" height="167" rx="7" fill="#fffdf8" stroke="#cad8d5"/><path d="M95 55v133M124 55v133M153 55v133M182 55v133M211 55v133M240 55v133M269 55v133M298 55v133M327 55v133M82 70h254M82 99h254M82 128h254M82 157h254M82 186h254" stroke="#dbe5e2" stroke-width="1"/><path d="M95 183V58m-8 8 8-8 8 8M91 157h242m-8-5 8 5-8 5" fill="none" stroke="#60796e" stroke-width="1.5"/><path d="M124 157 298 70" stroke="#d48466" stroke-width="3"/><circle cx="124" cy="157" r="5" fill="#d48466"/><circle cx="298" cy="70" r="5" fill="#d48466"/><circle cx="211" cy="113" r="5" fill="#547b62"/><text x="107" y="175" fill="#8a7567" font-size="10" font-family="Arial">A (1,1)</text><text x="280" y="60" fill="#8a7567" font-size="10" font-family="Arial">B (7,4)</text><rect x="220" y="123" width="101" height="36" rx="6" fill="#f3eadb"/><text x="231" y="139" fill="#61766a" font-size="10" font-family="Arial">m = Δy / Δx</text><text x="231" y="152" fill="#9a8b7e" font-size="8" font-family="Arial">gradient of AB</text></g>`;
+      if(id==='triangle') content=`<g filter="url(#${uid}s)"><path d="M108 190 108 71 300 190Z" fill="#fffdf8" stroke="#708d76" stroke-width="2.5"/><path d="M108 174h16v16" fill="none" stroke="#708d76" stroke-width="1.5"/><path d="M131 184a25 25 0 0 1 2-12" fill="none" stroke="#d58667" stroke-width="2"/><circle cx="132" cy="174" r="3" fill="#d58667"/><text x="151" y="199" font-size="12" fill="#657c68" font-family="Arial">adjacent</text><text x="88" y="127" font-size="11" fill="#657c68" font-family="Arial" transform="rotate(-90 88 127)">opposite</text><text x="198" y="119" font-size="12" fill="#8d715b" font-family="Arial" transform="rotate(31 198 119)">hypotenuse</text><rect x="292" y="69" width="75" height="94" rx="8" fill="#fffdf7"/><text x="310" y="93" fill="#d47d5f" font-size="13" font-family="Georgia">SOH</text><text x="310" y="110" fill="#60796a" font-size="10" font-family="Arial">sin θ = O/H</text><text x="310" y="130" fill="#d47d5f" font-size="13" font-family="Georgia">CAH</text><text x="310" y="147" fill="#60796a" font-size="10" font-family="Arial">cos θ = A/H</text></g>`;
+      if(id==='shapes') content=`<g><rect x="49" y="50" width="322" height="150" rx="10" fill="#fffdf8"/><path d="m91 124 43-24 42 24-43 25z" fill="#f4d4b7" stroke="#c98260" stroke-width="1.7"/><path d="M91 124v45l42 24v-44m43-25v44l-43 25" fill="#eabf99" stroke="#c98260" stroke-width="1.7"/><path d="M137 69h40v38h-40z" fill="#d7e6db" stroke="#709075" stroke-width="1.6"/><ellipse cx="157" cy="69" rx="20" ry="7" fill="#e7f0e5" stroke="#709075" stroke-width="1.6"/><path d="M137 107c0 8 40 8 40 0" fill="none" stroke="#709075" stroke-width="1.6"/><text x="88" y="183" fill="#a16e54" font-size="10" font-family="Arial">prism</text><text x="137" y="126" fill="#64826a" font-size="9" font-family="Arial">cylinder</text><rect x="219" y="75" width="128" height="85" rx="7" fill="#f5f2e7"/><text x="234" y="98" fill="#6e7f70" font-size="10" font-family="Arial">Area of circle</text><text x="234" y="118" fill="#bd795b" font-size="15" font-family="Georgia">A = πr²</text><text x="234" y="144" fill="#6e7f70" font-size="10" font-family="Arial">Prism volume</text><text x="304" y="144" fill="#bd795b" font-size="13" font-family="Georgia">V = Ah</text></g>`;
+      if(id==='cell') content=`<g filter="url(#${uid}s)"><rect x="71" y="47" width="270" height="157" rx="45" fill="#d8e8d0" stroke="#709271" stroke-width="5"/><rect x="82" y="58" width="248" height="135" rx="37" fill="#f5f5dd" stroke="#a2b58f" stroke-width="2"/><ellipse cx="200" cy="128" rx="35" ry="28" fill="#c7b3d4" stroke="#897a9c" stroke-width="2"/><circle cx="210" cy="122" r="8" fill="#87789f"/><ellipse cx="135" cy="107" rx="24" ry="11" fill="#97bc7e" stroke="#628757" stroke-width="2"/><path d="M119 107h32m-18-6v12" stroke="#547b51" stroke-width="1.5"/><ellipse cx="266" cy="151" rx="22" ry="9" fill="#a6c68a" stroke="#628757" stroke-width="2"/><path d="M251 151h30" stroke="#547b51" stroke-width="1.5"/><circle cx="151" cy="154" r="12" fill="#e5d999"/><path d="M103 80h-43m195-11 48-22m46 103 31 1m-228 36-36 18" stroke="#5c7260" stroke-width="1.2" fill="none"/><text x="26" y="78" fill="#617363" font-size="10" font-family="Arial">cell wall</text><text x="320" y="42" fill="#617363" font-size="10" font-family="Arial">nucleus</text><text x="339" y="148" fill="#617363" font-size="10" font-family="Arial">vacuole</text><text x="24" y="225" fill="#617363" font-size="10" font-family="Arial">chloroplast</text></g>`;
+      if(id==='heart') content=`<g filter="url(#${uid}s)"><path d="M211 74c-21-33-69-13-63 26 4 29 32 53 63 83 31-30 59-54 63-83 6-39-42-59-63-26Z" fill="#db9a8b" stroke="#af645d" stroke-width="2.2"/><path d="M211 83v94M213 130c22-20 41-34 44-55M210 133c-20-20-37-32-45-53" fill="none" stroke="#fff2dc" stroke-width="5" stroke-linecap="round"/><path d="M168 82c-14-23-8-42 6-52m75 52c13-24 7-42-6-53" fill="none" stroke="#668da1" stroke-width="8" stroke-linecap="round"/><path d="M174 85c-2 16 9 30 30 40m43-42c-2 17-13 29-31 41" fill="none" stroke="#bd6257" stroke-width="7" stroke-linecap="round"/><path d="M162 61c-10-12-18-11-25-8m117 8c10-12 18-11 25-8" fill="none" stroke="#668da1" stroke-width="6" stroke-linecap="round"/><path d="M134 54h-35m184 0h35" stroke="#6f8180"/><text x="47" y="57" fill="#526c75" font-size="10" font-family="Arial">to lungs</text><text x="322" y="57" fill="#526c75" font-size="10" font-family="Arial">from body</text><text x="161" y="201" fill="#52745e" font-size="10" font-family="Arial">right side</text><text x="225" y="201" fill="#a75f55" font-size="10" font-family="Arial">left side</text></g>`;
+      if(id==='foodchain') content=`<g><circle cx="91" cy="82" r="28" fill="#f3d47c"/><path d="M91 38v-11m0 121v-11M47 82H34m115 0h-13M60 51l-9-9m80 80-9-9m0-62 9-9M60 113l-9 9" stroke="#d8a64c" stroke-width="3" stroke-linecap="round"/><path d="M119 82h44m-10-6 10 6-10 6m80-6h42m-10-6 10 6-10 6m77-6h24" fill="none" stroke="#8a9d71" stroke-width="2"/><path d="M181 146c-9-12-15-26-13-41 11 10 18 19 19 30 4-15 10-24 20-31 2 18-1 31-12 43z" fill="#80a376" stroke="#5f835b"/><path d="M292 141q10-16 21-1l8 16h-33l4-15Z" fill="#d39072"/><circle cx="307" cy="142" r="2" fill="#fff"/><path d="M333 152h31l-6 9h-33z" fill="#988ab0"/><text x="67" y="174" fill="#887747" font-size="10" font-family="Arial">sun</text><text x="166" y="177" fill="#637a60" font-size="10" font-family="Arial">grass</text><text x="286" y="177" fill="#8a6d5d" font-size="10" font-family="Arial">herbivore</text><text x="329" y="177" fill="#796d8d" font-size="10" font-family="Arial">predator</text><rect x="89" y="204" width="242" height="25" rx="12" fill="#fffdf6"/><text x="210" y="221" text-anchor="middle" fill="#708071" font-size="10" font-family="Arial">energy flows · nutrients cycle</text></g>`;
+      if(id==='photo') content=`<g><rect x="55" y="51" width="310" height="151" rx="12" fill="#fffdf6"/><circle cx="211" cy="126" r="46" fill="#eef2d3" stroke="#91a46f" stroke-width="2"/><path d="M211 95v62m-27-31h54m-46-22 38 44m0-44-38 44" stroke="#9aaf79" stroke-width="1"/><path d="M74 126h80m114 0h78" stroke="#7c9d75" stroke-width="2"/><path d="m147 120 7 6-7 6m120-12-7 6 7 6" fill="none" stroke="#7c9d75" stroke-width="2"/><text x="69" y="105" fill="#71846d" font-size="12" font-family="Arial">6CO₂ + 6H₂O</text><text x="280" y="105" fill="#71846d" font-size="12" font-family="Arial">C₆H₁₂O₆ + 6O₂</text><text x="196" y="132" fill="#819061" font-size="10" font-family="Arial">light</text><text x="197" y="144" fill="#819061" font-size="10" font-family="Arial">energy</text><rect x="137" y="177" width="147" height="16" rx="8" fill="#e5eedf"/><text x="210" y="188" text-anchor="middle" fill="#66806a" font-size="8" font-family="Arial">CHLOROPHYLL IN CHLOROPLASTS</text></g>`;
+      if(id==='map') content=`<g><path d="${mapPath}" transform="translate(36 8) scale(.98 .98)" fill="#91b58b" stroke="#658c74" stroke-width="2.2"/><path d="M119 144c61-17 83 4 166-19v21c-74 23-112 2-165 18Z" fill="#e6c978" opacity=".9"/><path d="M146 95c38-10 80 9 134-7v31c-56 18-103-4-143 10Z" fill="#e8ad73" opacity=".82"/><path d="M176 58c27-11 54 4 82-1v24c-33 9-49-2-72 6Z" fill="#dca07d" opacity=".84"/><path d="M188 170c2-41-7-76 18-109" fill="none" stroke="#fffdf4" stroke-width="2" stroke-dasharray="4 5"/><text x="75" y="69" fill="#55735f" font-size="11" font-family="Arial">SAHEL</text><text x="73" y="112" fill="#8f7151" font-size="11" font-family="Arial">SAVANNA</text><text x="69" y="163" fill="#6c8678" font-size="11" font-family="Arial">HUMID COAST</text><text x="265" y="179" fill="#65796e" font-size="9" font-family="Arial">Gulf of Guinea</text><circle cx="231" cy="152" r="4" fill="#c87256"/><text x="239" y="155" fill="#60796a" font-size="10" font-family="Arial">Lagos</text><rect x="306" y="60" width="74" height="67" rx="8" fill="#fffdf8"/><rect x="318" y="73" width="9" height="9" rx="2" fill="#dca07d"/><text x="332" y="81" fill="#7d887e" font-size="8" font-family="Arial">drier north</text><rect x="318" y="91" width="9" height="9" rx="2" fill="#e8c978"/><text x="332" y="99" fill="#7d887e" font-size="8" font-family="Arial">savanna</text><rect x="318" y="109" width="9" height="9" rx="2" fill="#91b58b"/><text x="332" y="117" fill="#7d887e" font-size="8" font-family="Arial">wetter south</text></g>`;
+      if(id==='contour') content=`<g><rect x="48" y="45" width="323" height="163" rx="10" fill="#f7f8ef"/><path d="M91 179c-37-39 8-113 89-121 85-8 152 28 135 81-12 37-38 48-70 55-57 13-124 25-154-15Z" fill="#e8eddf" stroke="#81a087" stroke-width="1.7"/><path d="M117 170c-27-30 12-86 67-94 64-9 115 14 102 56-10 31-32 39-61 46-43 10-88 18-108-8Z" fill="#e1ead8" stroke="#7fa084" stroke-width="1.7"/><path d="M141 160c-18-22 15-59 49-66 42-8 78 6 69 34-7 23-26 31-47 37-28 7-56 11-71-5Z" fill="#d5e5d1" stroke="#6f947a" stroke-width="1.7"/><path d="M169 147c-9-13 9-34 29-39 23-6 44 1 39 17-4 13-14 20-28 24-17 5-32 5-40-2Z" fill="#c7dec6" stroke="#688b72" stroke-width="1.7"/><circle cx="216" cy="130" r="4" fill="#d17c61"/><path d="M286 71h49" stroke="#bb8661" stroke-width="1.5"/><text x="291" y="64" fill="#8a7662" font-size="10" font-family="Arial">hilltop</text><path d="M284 164h55" stroke="#718e79" stroke-width="1.5"/><text x="290" y="181" fill="#718e79" font-size="9" font-family="Arial">contours close together</text><text x="63" y="200" fill="#779079" font-size="9" font-family="Arial">Each line joins points of equal height</text></g>`;
+      if(id==='winds') content=`<g><circle cx="208" cy="130" r="83" fill="#d4e5e2" stroke="#749890" stroke-width="2"/><path d="M128 90c51 24 112 24 161 0M128 169c51-23 112-23 161 0" fill="none" stroke="#d78e6c" stroke-width="15" opacity=".8"/><path d="M129 108c45 15 114 15 158 0m-159 45c45-15 114-15 158 0" fill="none" stroke="#98b982" stroke-width="10" opacity=".85"/><path d="M126 130h164" stroke="#fffdf5" stroke-width="2" stroke-dasharray="5 5"/><path d="M105 88c-14 11-14 23 0 34m208 50c15-11 15-23 0-34M160 41c-6 13 0 25 14 31m68 115c7-14 0-25-14-32" fill="none" stroke="#607d79" stroke-width="2"/><path d="m100 120 5 4 2-7m207 53 6-4-2 7m-145-105 8 3-1-8m71 149-8-3 1 8" fill="none" stroke="#607d79" stroke-width="2"/><text x="178" y="135" fill="#657e7a" font-size="10" font-family="Arial">EQUATOR</text><text x="46" y="72" fill="#607d79" font-size="10" font-family="Arial">Westerlies</text><text x="316" y="194" fill="#607d79" font-size="10" font-family="Arial">Trade winds</text></g>`;
+      if(id==='river') content=`<g><path d="M48 58h324v145H48z" fill="#eceddf"/><path d="M52 67c44 25 66 15 93 27 29 12 24 23 7 37-19 16-37 27-16 39 24 14 55-4 80-11 35-10 47 9 79 10 32 1 47-10 76-23" fill="none" stroke="#98b984" stroke-width="28" stroke-linecap="round"/><path d="M52 67c44 25 66 15 93 27 29 12 24 23 7 37-19 16-37 27-16 39 24 14 55-4 80-11 35-10 47 9 79 10 32 1 47-10 76-23" fill="none" stroke="#83b9c2" stroke-width="17" stroke-linecap="round"/><path d="M52 67 91 81m282 65 14-6" stroke="#5c8994" stroke-width="2"/><text x="63" y="46" fill="#70846d" font-size="10" font-family="Arial">SOURCE · UPPER COURSE</text><text x="175" y="194" fill="#70846d" font-size="10" font-family="Arial">MEANDER · MIDDLE COURSE</text><text x="295" y="54" fill="#70846d" font-size="10" font-family="Arial">DELTA · MOUTH</text><path d="m73 90 10 1-7-7m278 43-9 5 10 2" fill="none" stroke="#eef8f4" stroke-width="2"/></g>`;
+      if(id==='timeline'||id==='timeline2') {const labels=id==='timeline'?['c.300','c.800','1200s','1300s','1500s']:['1914','1922','1946','1954','1960']; const names=id==='timeline'?['Ghana','Ghana','Mali','Mali','Songhai']:['Amalgamation','Legislative','Constitution','Federation','Independence'];content=`<g><rect x="47" y="56" width="326" height="149" rx="10" fill="#fffdf7"/><path d="M78 127h265" stroke="#b69b77" stroke-width="3"/><path d="M93 113v28m58-28v28m58-28v28m58-28v28m58-28v28" stroke="#bb8a67" stroke-width="2"/>${labels.map((x,i)=>`<circle cx="${93+i*58}" cy="127" r="6" fill="${i===labels.length-1?'#d27f61':'#6e9476'}"/><text x="${93+i*58}" y="93" text-anchor="middle" fill="#95755c" font-size="11" font-family="Arial">${x}</text><text x="${93+i*58}" y="162" text-anchor="middle" fill="#64786a" font-size="${id==='timeline2'?8:9}" font-family="Arial">${names[i]}</text>`).join('')}<rect x="126" y="179" width="170" height="15" rx="7" fill="#f1eade"/><text x="211" y="190" text-anchor="middle" fill="#8e7c67" font-size="8" font-family="Arial">TRADE · POWER · CHANGE OVER TIME</text></g>`;}
+      if(id==='routes') content=`<g><path d="M89 66c53-18 71 4 111 0 31-4 55-12 110-2 18 3 39 21 25 46-13 23-8 39-29 53-25 18-47 14-78 27-42 17-85 12-111-13-25-24-43-81-28-111Z" fill="#e5d7ba" stroke="#bca782" stroke-width="2"/><path d="M277 62c44-10 72 10 76 45 3 32-17 63-46 81-33 21-72 17-97-2-19-15-23-37-13-60 12-31 40-55 80-64Z" fill="#e7d5bb" stroke="#bca782" stroke-width="2"/><path d="M148 108c67 3 97 14 150 2m-147 26c62-4 87 3 144-7m-130 34c51-3 83 0 122-11" fill="none" stroke="#ca8f6e" stroke-width="2" stroke-dasharray="5 4"/><circle cx="142" cy="105" r="4" fill="#bf7259"/><circle cx="289" cy="108" r="4" fill="#bf7259"/><circle cx="221" cy="168" r="4" fill="#bf7259"/><text x="105" y="86" fill="#8a755f" font-size="10" font-family="Arial">EUROPE</text><text x="116" y="191" fill="#8a755f" font-size="10" font-family="Arial">WEST AFRICA</text><text x="287" y="201" fill="#8a755f" font-size="10" font-family="Arial">AMERICAS</text><rect x="29" y="202" width="179" height="20" rx="9" fill="#fffdf8"/><text x="118" y="216" text-anchor="middle" fill="#936c5c" font-size="8" font-family="Arial">FORCED MIGRATION · HUMAN COST</text></g>`;
+      if(id==='conference') content=`<g><rect x="53" y="54" width="314" height="145" rx="10" fill="#fffdf8"/><circle cx="209" cy="126" r="44" fill="#efe4d4" stroke="#ba9270" stroke-width="2"/><text x="209" y="121" text-anchor="middle" fill="#7e705f" font-family="Georgia" font-size="13">BERLIN</text><text x="209" y="141" text-anchor="middle" fill="#a17c5c" font-family="Arial" font-size="10">1884—85</text><path d="M210 82 210 60m-34 35-43-23m42 54-53 3m55 29-35 31m69-31 35 32m-15-69 47-24m-48 55 56 6" stroke="#c49a76" stroke-width="1.5"/><g fill="#c28e6d"><circle cx="210" cy="58" r="6"/><circle cx="131" cy="68" r="6"/><circle cx="120" cy="128" r="6"/><circle cx="140" cy="183" r="6"/><circle cx="280" cy="184" r="6"/><circle cx="293" cy="70" r="6"/><circle cx="309" cy="137" r="6"/></g><text x="73" y="219" fill="#7f7568" font-size="9" font-family="Arial">EUROPEAN POWERS · NO AFRICAN REPRESENTATIVES</text></g>`;
+      if(id==='government') content=`<g><path d="m210 47 125 31H85z" fill="#c8bad9" stroke="#897ca0" stroke-width="2"/><rect x="100" y="80" width="220" height="13" rx="3" fill="#dbd2e4"/><rect x="107" y="165" width="206" height="14" rx="3" fill="#dbd2e4"/><path d="M124 95v68m43-68v68m43-68v68m43-68v68m43-68v68" stroke="#9486a7" stroke-width="10"/><rect x="92" y="180" width="236" height="11" rx="3" fill="#b8aacd"/><text x="210" y="216" text-anchor="middle" fill="#746d82" font-size="10" font-family="Arial">SEPARATION OF POWERS · CHECKS &amp; BALANCES</text><rect x="67" y="61" width="65" height="30" rx="6" fill="#fffdf8"/><text x="99" y="80" text-anchor="middle" fill="#786e89" font-size="9" font-family="Arial">Legislature</text><rect x="280" y="61" width="75" height="30" rx="6" fill="#fffdf8"/><text x="317" y="80" text-anchor="middle" fill="#786e89" font-size="9" font-family="Arial">Executive</text><rect x="176" y="177" width="68" height="28" rx="6" fill="#fffdf8"/><text x="210" y="195" text-anchor="middle" fill="#786e89" font-size="9" font-family="Arial">Judiciary</text></g>`;
+      if(id==='rights') content=`<g><circle cx="207" cy="127" r="39" fill="#d7cadf"/><circle cx="207" cy="127" r="27" fill="#eee8dd"/><path d="M207 108v23m0 13h.01" stroke="#887a99" stroke-width="4" stroke-linecap="round"/><path d="M207 55v25m0 94v25M136 127h28m86 0h28m-121-50 20 20m75 61 20 20m0-101-20 20m-75 61-20 20" stroke="#ac9bbc" stroke-width="2"/><g fill="#fffdf8" stroke="#d6d0da"><rect x="68" y="49" width="97" height="30" rx="15"/><rect x="259" y="49" width="96" height="30" rx="15"/><rect x="63" y="176" width="103" height="30" rx="15"/><rect x="254" y="176" width="102" height="30" rx="15"/></g><text x="116" y="68" text-anchor="middle" fill="#756d80" font-size="9" font-family="Arial">Equality</text><text x="307" y="68" text-anchor="middle" fill="#756d80" font-size="9" font-family="Arial">Expression</text><text x="114" y="195" text-anchor="middle" fill="#756d80" font-size="9" font-family="Arial">Education</text><text x="305" y="195" text-anchor="middle" fill="#756d80" font-size="9" font-family="Arial">Fair hearing</text></g>`;
+      if(id==='election') content=`<g><path d="M81 131h247" stroke="#9cabb0" stroke-width="2"/><g><circle cx="89" cy="131" r="25" fill="#d7e6e3"/><circle cx="168" cy="131" r="25" fill="#e7e9d7"/><circle cx="247" cy="131" r="25" fill="#eee2d5"/><circle cx="326" cy="131" r="25" fill="#d9e9da"/></g><g fill="none" stroke="#688780" stroke-width="2" stroke-linejoin="round"><path d="M79 125h20v14H79zM83 121h12v4H83z"/><path d="M160 124h16v15h-16zM163 120h10v4h-10zM163 130l4 4 7-8"/><path d="M238 123h18v16h-18zM242 127h10m-10 4h10m-10 4h6"/><path d="M318 125h17v13h-17zM321 121h11v4h-11z"/></g><text x="89" y="175" text-anchor="middle" fill="#75867d" font-size="9" font-family="Arial">Register</text><text x="168" y="175" text-anchor="middle" fill="#75867d" font-size="9" font-family="Arial">Accredit</text><text x="247" y="175" text-anchor="middle" fill="#75867d" font-size="9" font-family="Arial">Vote</text><text x="326" y="175" text-anchor="middle" fill="#75867d" font-size="9" font-family="Arial">Count</text><text x="208" y="69" text-anchor="middle" fill="#66837c" font-size="12" font-family="Georgia">YOUR VOTE · YOUR VOICE</text><path d="m115 127 5 4-5 4m79-8 5 4-5 4m79-8 5 4-5 4" fill="none" stroke="#82968d" stroke-width="1.5"/></g>`;
+      if(id==='community') content=`<g><circle cx="208" cy="105" r="31" fill="#e5cda7"/><path d="M162 184c5-37 20-52 46-52s41 15 46 52" fill="#86a486"/><circle cx="111" cy="122" r="23" fill="#d9b596"/><path d="M75 187c3-29 15-41 36-41s33 12 36 41" fill="#97aab6"/><circle cx="304" cy="122" r="23" fill="#c88f76"/><path d="M269 187c3-29 14-41 35-41s33 12 37 41" fill="#b69dbd"/><path d="m161 89 16-15m87 15-16-15M113 87l-9-9m198 9 9-9" stroke="#819681" stroke-width="2"/><rect x="95" y="195" width="226" height="28" rx="14" fill="#fffdf7"/><text x="208" y="213" text-anchor="middle" fill="#728170" font-size="10" font-family="Arial">PARTICIPATE · RESPECT · CONTRIBUTE</text><path d="M172 81q35-30 70 0" fill="none" stroke="#b68e5c" stroke-width="2" stroke-dasharray="3 4"/></g>`;
+      if(id==='paper') content=`<g filter="url(#${uid}s)"><rect x="90" y="32" width="242" height="194" rx="8" fill="#fffdf8" stroke="#d8d7c8"/><path d="M118 65h104m-104 11h176m-176 11h150" stroke="#d7ddd1" stroke-width="2"/><rect x="118" y="105" width="26" height="26" rx="4" fill="#e9efe4"/><text x="131" y="123" text-anchor="middle" fill="#57735d" font-size="12" font-family="Georgia">Q</text><path d="M154 110h116m-116 8h90m-126 24h150" stroke="#d4d9cf" stroke-width="2"/><circle cx="126" cy="163" r="6" fill="none" stroke="#c99572" stroke-width="1.5"/><path d="M145 163h115" stroke="#d4d9cf" stroke-width="2"/><circle cx="126" cy="184" r="6" fill="none" stroke="#c99572" stroke-width="1.5"/><path d="M145 184h103" stroke="#d4d9cf" stroke-width="2"/><rect x="262" y="49" width="49" height="17" rx="8" fill="#e7efe5"/><text x="286" y="61" text-anchor="middle" fill="#5b795f" font-size="8" font-family="Arial">PRACTICE</text><text x="211" y="212" text-anchor="middle" fill="#8f8679" font-size="8" font-family="Arial">QUESTION SET · ANSWERS INCLUDED</text></g>`;
+      return commonStart+content+end;
+    }
+
+    const subjectCards = document.getElementById('subjectCards');
+    const grid = document.getElementById('resourceGrid');
+    const backdrop = document.getElementById('readerBackdrop');
+    const searchInput = document.getElementById('searchInput');
+    const filters = {subject:'All subjects',type:'All formats',view:'all',query:''};
+    let saved = new Set(JSON.parse(localStorage.getItem('fieldnotes-saved')||'[]'));
+    let currentResource = null;
+    let toastTimer;
+
+    function drawSubjects(){
+      subjectCards.innerHTML=subjects.map(s=>`<button class="subject-card" style="--tint:${s.tint};--accent:${s.color}" data-subject="${esc(s.name)}"><div class="subject-art">${svgIcon(s)}</div><div class="subject-info"><strong>${esc(s.name)}</strong><span>4 visuals&nbsp; →</span></div></button>`).join('');
+      subjectCards.querySelectorAll('.subject-card').forEach(b=>b.addEventListener('click',()=>setSubject(b.dataset.subject)));
+    }
+    function drawFilters(){
+      const bar=document.getElementById('filterBar');
+      const types=filters.view==='questions'?['All formats','Question packs']:['All formats','Diagrams & maps','Revision slides','Practice questions'];
+      bar.innerHTML=`<span class="filter-label">Filter by</span>${['All subjects',...subjects.map(s=>s.name)].map(s=>`<button class="filter-chip ${filters.subject===s?'selected':''}" data-subject-filter="${esc(s)}">${esc(s)}</button>`).join('')}${types.map(t=>`<button class="filter-chip ${filters.type===t?'selected':''}" data-type-filter="${esc(t)}">${esc(t)}</button>`).join('')}`;
+      bar.querySelectorAll('[data-subject-filter]').forEach(b=>b.onclick=()=>{filters.subject=b.dataset.subjectFilter;render()});
+      bar.querySelectorAll('[data-type-filter]').forEach(b=>b.onclick=()=>{filters.type=b.dataset.typeFilter;render()});
+    }
+    function getVisible(){
+      let list=resources.filter(r=>{
+        const matchesView=filters.view==='questions'?r.category==='Questions':filters.view==='saved'?saved.has(r.id):true;
+        const matchesSubject=filters.subject==='All subjects'||r.subject===filters.subject;
+        const matchesType=filters.type==='All formats'||(filters.type==='Diagrams & maps'?['Diagram','Illustration','Infographic','Science diagram','Map','Map study','Historical map','Process map'].includes(r.type):filters.type==='Revision slides'?r.category==='Slides':r.category==='Questions');
+        const hay=[r.title,r.subject,r.type,r.description,...(r.tags||[])].join(' ').toLowerCase();
+        return matchesView&&matchesSubject&&matchesType&&hay.includes(filters.query.toLowerCase());
+      });
+      const sort=document.getElementById('sortSelect').value;
+      if(sort==='az') list.sort((a,b)=>a.title.localeCompare(b.title));
+      if(sort==='subject') list.sort((a,b)=>a.subject.localeCompare(b.subject)||a.title.localeCompare(b.title));
+      return list;
+    }
+    function render(){
+      drawFilters();
+      const list=getVisible();
+      document.getElementById('resultCount').textContent=`Showing ${list.length} ${list.length===1?'resource':'resources'}`;
+      document.getElementById('emptyState').classList.toggle('show',list.length===0);
+      grid.style.display=list.length?'grid':'none';
+      grid.innerHTML=list.map(r=>`<article class="resource-card" data-resource="${r.id}" style="--cover:${bgPalette[r.kind]};--subject-color:${palette[r.subject]}"><div class="resource-cover">${art(r)}<span class="type-pill">${esc(r.type)}</span><button class="save-button ${saved.has(r.id)?'saved':''}" data-save="${r.id}" aria-label="${saved.has(r.id)?'Remove saved item':'Save resource'}"><svg viewBox="0 0 24 24"><path d="M6 4.8A1.8 1.8 0 0 1 7.8 3h8.4A1.8 1.8 0 0 1 18 4.8V21l-6-3.7L6 21z"/></svg></button></div><div class="resource-body"><div class="resource-meta"><span class="meta-dot"></span>${esc(r.subject)}<span>·</span>${esc(r.time)}</div><h3>${esc(r.title)}</h3><div class="resource-desc">${esc(r.description)}</div><div class="card-foot"><b>${r.category==='Questions'?'Answers included':esc(r.category)}</b><span class="arrow">↗</span></div></div></article>`).join('');
+      grid.querySelectorAll('.resource-card').forEach(card=>card.addEventListener('click',(e)=>{if(!e.target.closest('[data-save]'))openReader(card.dataset.resource)}));
+      grid.querySelectorAll('[data-save]').forEach(btn=>btn.addEventListener('click',(e)=>{e.stopPropagation();toggleSaved(btn.dataset.save)}));
+      document.getElementById('savedCount').textContent=saved.size;
+      document.getElementById('crumbCurrent').textContent=filters.view==='questions'?'Past questions':filters.view==='saved'?'Saved resources':filters.subject!=='All subjects'?filters.subject:'All resources';
+      document.getElementById('libraryHeading').textContent=filters.view==='questions'?'Past question sets':filters.view==='saved'?'Saved resources':filters.query?`Search results for “${filters.query}”`:filters.subject!=='All subjects'?filters.subject+' resources':'Library picks';
+      document.getElementById('librarySubtitle').textContent=filters.view==='questions'?'WAEC-style practice questions with worked answers':filters.view==='saved'?'Your bookmarked revision resources':filters.subject!=='All subjects'?'Visuals selected for this subject':'Hand-picked visuals to make revision feel lighter';
+    }
+    function setSubject(subject){filters.subject=subject;filters.view='all';document.querySelectorAll('.nav-button').forEach(b=>b.classList.toggle('active',b.dataset.subject===subject));render();document.getElementById('librarySection').scrollIntoView({behavior:'smooth',block:'start'});document.getElementById('sidebar').classList.remove('mobile-open');}
+    function setView(view){filters.view=view;filters.subject='All subjects';filters.type='All formats';document.querySelectorAll('.nav-button[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));render();document.getElementById('sidebar').classList.remove('mobile-open');if(view!=='all')document.getElementById('librarySection').scrollIntoView({behavior:'smooth',block:'start'});}
+    function toggleSaved(id){if(saved.has(id)){saved.delete(id);notify('Removed from your saved resources.')}else{saved.add(id);notify('Saved to your revision library.')}localStorage.setItem('fieldnotes-saved',JSON.stringify([...saved]));render();}
+    function notify(message){const toast=document.getElementById('toast');toast.textContent=message;toast.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toast.classList.remove('show'),2100);}
+    function openReader(id){
+      currentResource=resources.find(r=>r.id===id);if(!currentResource)return;
+      const r=currentResource;
+      document.getElementById('readerVisual').innerHTML=art(r,true)+`<div class="reader-visual-note">${esc(r.subject.toUpperCase())} &nbsp;·&nbsp; ${esc(r.type.toUpperCase())}</div>`;
+      const questions=r.questions?`<div class="reader-section-label">Try a question</div>${r.questions.map((q,i)=>`<div class="exam-box"><div class="reader-meta">SAMPLE QUESTION ${i+1}</div><p class="exam-question">${esc(q[0])}</p><div class="reader-points">${q[1].map((a,n)=>`<div class="reader-point"><span class="point-n">${'ABCD'[n]}</span><span>${esc(a)}</span></div>`).join('')}</div><button class="answer-toggle" data-answer="answer${i}">Show answer &amp; explanation&nbsp; ↓</button><div class="answer" id="answer${i}">${esc(q[2])}</div></div>`).join('')}<div class="demo-note">Demo content: original WASSCE-style practice questions for this prototype, not verified transcripts of official past papers.</div>`:`<div class="reader-section-label">Remember these</div><div class="reader-points">${r.takeaways.map((t,i)=>`<div class="reader-point"><span class="point-n">${i+1}</span><span>${esc(t)}</span></div>`).join('')}</div>`;
+      document.getElementById('readerContent').innerHTML=`<div class="reader-kicker">${esc(r.type)} · ${esc(r.subject)}</div><h2 id="readerTitle">${esc(r.title)}</h2><div class="reader-submeta">${esc(r.subject)} &nbsp;·&nbsp; ${esc(r.time)} &nbsp;·&nbsp; ${esc(r.category)}</div><p class="reader-description">${esc(r.description)}</p>${questions}<div class="reader-actions"><button class="reader-action" id="readerSave">${saved.has(r.id)?'♥ Saved':'♡ Save resource'}</button><button class="reader-action primary" id="projectButton">⛶&nbsp; Project this visual</button></div>`;
+      document.querySelectorAll('.answer-toggle').forEach(btn=>btn.addEventListener('click',()=>{const answer=document.getElementById(btn.dataset.answer);answer.classList.toggle('visible');btn.innerHTML=answer.classList.contains('visible')?'Hide answer &amp; explanation&nbsp; ↑':'Show answer &amp; explanation&nbsp; ↓'}));
+      document.getElementById('readerSave').onclick=()=>{toggleSaved(r.id);document.getElementById('readerSave').textContent=saved.has(r.id)?'♥ Saved':'♡ Save resource'};
+      document.getElementById('projectButton').onclick=()=>openProjection();
+      backdrop.classList.add('open');document.body.style.overflow='hidden';document.getElementById('readerClose').focus();
+    }
+    function closeReader(){backdrop.classList.remove('open','projection');document.body.style.overflow='';if(document.fullscreenElement)document.exitFullscreen().catch(()=>{});}
+    async function openProjection(){backdrop.classList.add('projection');try{await backdrop.requestFullscreen();}catch(e){/* Projection stays in the full-window reader when browser fullscreen is unavailable. */}}
+    document.getElementById('readerClose').addEventListener('click',closeReader);
+    backdrop.addEventListener('click',e=>{if(e.target===backdrop)closeReader()});
+    document.addEventListener('keydown',e=>{if(e.key==='Escape'&&backdrop.classList.contains('open'))closeReader();if(e.key==='/'&&!['INPUT','TEXTAREA'].includes(document.activeElement.tagName)){e.preventDefault();searchInput.focus();}});
+    document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement)backdrop.classList.remove('projection')});
+    document.querySelectorAll('.nav-button[data-view]').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view)));
+    document.querySelectorAll('.subject-link').forEach(b=>b.addEventListener('click',()=>setSubject(b.dataset.subject)));
+    searchInput.addEventListener('input',()=>{filters.query=searchInput.value.trim();render();});
+    document.getElementById('sortSelect').addEventListener('change',()=>render());
+    document.getElementById('clearFilters').addEventListener('click',()=>{filters.subject='All subjects';filters.type='All formats';filters.view='all';filters.query='';searchInput.value='';setView('all');});
+    document.getElementById('emptyReset').addEventListener('click',()=>document.getElementById('clearFilters').click());
+    document.getElementById('allSubjects').addEventListener('click',()=>{filters.subject='All subjects';filters.type='All formats';filters.view='all';render();document.getElementById('librarySection').scrollIntoView({behavior:'smooth'});});
+    document.getElementById('heroBrowse').addEventListener('click',()=>document.getElementById('librarySection').scrollIntoView({behavior:'smooth'}));
+    document.getElementById('featuredOpen').addEventListener('click',()=>openReader('heart-flow'));
+    document.getElementById('topProject').addEventListener('click',()=>{openReader('heart-flow');openProjection()});
+    document.getElementById('mobileMenu').addEventListener('click',()=>document.getElementById('sidebar').classList.toggle('mobile-open'));
+    document.getElementById('todayDate').textContent=new Intl.DateTimeFormat('en',{weekday:'long',month:'long',day:'numeric'}).format(new Date());
+    document.getElementById('heroArt').insertAdjacentHTML('afterbegin',art(resources.find(r=>r.id==='heart-flow')));
+    drawSubjects();render();
+  </script>
+</body>
+</html>
